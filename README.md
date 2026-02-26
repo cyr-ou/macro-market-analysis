@@ -28,3 +28,13 @@ pip install -r requirements.txt
 
 python src/financial\_analysis.py
 
+## Visual Outputs
+
+### Gold Price
+![Gold Price](visuals/gold_price.png)
+
+### Rolling Correlation
+![Rolling Correlation](visuals/rolling_correlation.png)
+
+### Rolling Volatility
+![Rolling Volatility](visuals/rolling_volatility.png)
