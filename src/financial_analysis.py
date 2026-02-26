@@ -1,5 +1,7 @@
 import yfinance as yf
 import pandas as pd
+import matplotlib.pyplot as plt
+import os
 
 # 1) Download daily data
 start_date = "2020-01-01"
@@ -46,47 +48,41 @@ rolling_vol = returns.rolling(30).std()
 print("\n=== Rolling Vol (30d) last 5 ===")
 print(rolling_vol.tail(5))
 
-# 7) Rolling Sharpe Ratio (30-day, risk-free rate = 0)
-import numpy as np
+# --------- Save charts to <project_root>/visuals (robust) ----------
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))          # .../src
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))   # project root
+VIS_DIR = os.path.join(PROJECT_ROOT, "visuals")
+os.makedirs(VIS_DIR, exist_ok=True)
 
-mean_daily_return = returns.mean()
-annual_return = mean_daily_return * 252
-
-annual_vol = returns.std() * np.sqrt(252)
-
-sharpe_ratio = annual_return / annual_vol
-
-print("\n=== Annualized Return ===")
-print(annual_return)
-
-print("\n=== Annualized Volatility ===")
-print(annual_vol)
-
-print("\n=== Sharpe Ratio ===")
-print(sharpe_ratio)
-
-# 8) Maximum Drawdown
-cumulative = (1 + returns).cumprod()
-rolling_max = cumulative.cummax()
-drawdown = (cumulative - rolling_max) / rolling_max
-
-max_drawdown = drawdown.min()
-
-print("\n=== Maximum Drawdown ===")
-print(max_drawdown)
-
-# 9) Visualization
-import matplotlib.pyplot as plt
-
-plt.figure(figsize=(10,6))
-plt.plot(prices["GOLD"], label="Gold")
+# 1) Gold Price
+plt.figure(figsize=(10, 6))
+plt.plot(prices["GOLD"])
 plt.title("Gold Price")
+plt.savefig(os.path.join(VIS_DIR, "gold_price.png"), dpi=200, bbox_inches="tight")
+plt.close()
+
+# 2) Rolling Correlation
+plt.figure(figsize=(10, 6))
+plt.plot(rolling_corr)
+plt.title("60-Day Rolling Correlation: Gold vs DXY")
+plt.savefig(os.path.join(VIS_DIR, "rolling_correlation.png"), dpi=200, bbox_inches="tight")
+plt.close()
+
+# 3) Rolling Volatility
+plt.figure(figsize=(10, 6))
+plt.plot(rolling_vol["GOLD"], label="Gold")
+plt.plot(rolling_vol["DXY"], label="DXY")
+plt.plot(rolling_vol["US10Y"], label="US10Y")
 plt.legend()
-plt.show()
+plt.title("30-Day Rolling Volatility")
+plt.savefig(os.path.join(VIS_DIR, "rolling_volatility.png"), dpi=200, bbox_inches="tight")
+plt.close()
 
-# 10) Regime Analysis
-high_vol = rolling_vol["GOLD"] > rolling_vol["GOLD"].median()
-low_vol = rolling_vol["GOLD"] <= rolling_vol["GOLD"].median()
+print(f"\n✅ Charts saved to: {VIS_DIR}")
 
-print("Gold avg return during high vol:", returns["GOLD"][high_vol].mean())
-print("Gold avg return during low vol:", returns["GOLD"][low_vol].mean())
+# Save cleaned dataset
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+
+prices.to_csv(os.path.join(DATA_DIR, "prices.csv"))
+returns.to_csv(os.path.join(DATA_DIR, "returns.csv"))
